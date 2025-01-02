@@ -8,5 +8,5 @@ set(BENCHMARK_ENABLE_TESTING OFF)
 FetchContent_MakeAvailable(googlebench)
 
 add_executable(Benchmarks benchmarks.cpp)
-target_link_libraries(Benchmarks PRIVATE erased::erased benchmark::benchmark)
+target_link_libraries(Benchmarks PRIVATE erased::erased erased::warnings benchmark::benchmark)
 

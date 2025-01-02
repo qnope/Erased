@@ -4,7 +4,7 @@ It is a C++ type-erasure implementation developed with performance and ease of u
 
 It is heavily inspired by [AnyAny](https://github.com/kelbon/AnyAny).
 
-The [tested compilers](https://godbolt.org/z/ss8PE6zc3) are:
+The [tested compilers](https://godbolt.org/z/dWe3oPceW) are:
 1. MSVC (19.32 and above): `constexpr` does not work since MSVC does not yet handle `virtual` functions in a constexpr context.
 2. Clang (19.1 and above)
 3. GCC (14.1 and above)
@@ -80,3 +80,6 @@ For example, if you want to have a copyable and movable Drawable, you can do
 // Draw behavior
 using Drawable = erased::erased<Draw, erased::Move, erased::Copy>;
 ```
+## Thanks
+Here is the list of people who help me to develop and test this library:
+1. [Théo Devaucoup](https://github.com/theo-dep)

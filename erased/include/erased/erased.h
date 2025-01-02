@@ -42,10 +42,10 @@ template <typename Method>
 using CreateSignature = Signature<Method, MethodPtr<Method>>;
 
 struct Copy {
-  static void invoker(const auto &) {}
+  static constexpr void invoker(const auto &) {}
 };
 struct Move {
-  static void invoker(const auto &) {}
+  static constexpr void invoker(const auto &) {}
 };
 
 namespace details::base {
@@ -87,6 +87,8 @@ template <typename Base, typename Type, typename Method, typename R,
 struct concrete_method<Base, Type, Signature<Method, R(Args...) const>,
                        Others...> : concrete_method<Base, Type, Others...> {
   using concrete_method<Base, Type, Others...>::concrete_method;
+  using concrete_method<Base, Type, Others...>::invoker;
+
   constexpr R invoker(Method, Args... args) const override {
     return Method::invoker(this->m_object, fwd(args)...);
   }
@@ -97,6 +99,8 @@ template <typename Base, typename Type, typename Method, typename R,
 struct concrete_method<Base, Type, Signature<Method, R(Args...)>, Others...>
     : concrete_method<Base, Type, Others...> {
   using concrete_method<Base, Type, Others...>::concrete_method;
+  using concrete_method<Base, Type, Others...>::invoker;
+
   constexpr R invoker(Method, Args... args) override {
     return Method::invoker(this->m_object, fwd(args)...);
   }
