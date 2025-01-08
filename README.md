@@ -4,12 +4,20 @@ It is a C++ type-erasure implementation developed with performance and ease of u
 
 It is heavily inspired by [AnyAny](https://github.com/kelbon/AnyAny).
 
-The [tested compilers](https://godbolt.org/z/E9sTqhEh8) are:
+The [tested compilers](https://godbolt.org/z/GMe3EPvbd) are:
 1. MSVC (19.32 and above): `constexpr` does not work since MSVC does not yet handle `virtual` functions in a constexpr context.
 2. Clang (19.1 and above)
 3. GCC (14.1 and above)
 
-## Basics
+## Erased types
+Erased provides two main types inside the namespace `erased`:
+
+1. erased: It is a owning type-erasure type
+2. ref: It is a non owning type-erasure type
+
+Both are meant to be used the same way (except you are responsible for the lifetime of `ref` object).
+
+## `erased::erased`
 Here are the currently supported features
 1. `constexpr` friendly
 2. Small Object Optimization
@@ -51,8 +59,8 @@ struct Rectangle {
 };
 
 int main() {
- Circle c;
- Rectangle r;
+  Circle c;
+  Rectangle r;
   render(c);
   render(r);
 }
@@ -69,12 +77,31 @@ using Drawable = erased::erased<Draw>;
 ```
 </details>
 
+## `erased::ref`
+
+```cpp
+using DrawableRef = erased::ref<Draw>;
+
+void renderRef(DrawableRef<Draw> ref) {
+  ref.draw(std::cout);
+}
+
+int main() {
+  Circle c;
+  Rectangle r;
+  renderRef(c);
+  renderRef(r);
+}
+```
+
 ## Erased provided behaviors
 The `erased::erased` type has only a constructor and destructor by default. We provide these behaviors to extend easily the given type:
 1. Copy: Add copy constructor and copy assignment operator
 2. Move: Add noexcept move constructor and noexcept move assignment operator
 
-For example, if you want to have a copyable and movable Drawable, you can do
+For example, if you want to have a copyable and movable Drawable, you can do.
+
+We plan to add new default behaviors like stream operators, arithmetic operators, or `toString` behaviors in the future.
 
 ```cpp
 // Draw behavior
