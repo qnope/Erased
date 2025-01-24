@@ -86,6 +86,33 @@ constexpr double simpleComputationRef(SurfaceRef ref) {
   return ref.perimeter() + ref.computeArea();
 }
 
+constexpr auto castRefTest() {
+  Surface x = Circle(1.0);
+  auto &ref_x = erased::any_cast<Circle>(x);
+  auto &cref_x = erased::any_cast<Circle>(std::as_const(x));
+
+  static_assert(std::is_same_v<decltype(ref_x), Circle &>);
+  static_assert(std::is_same_v<decltype(cref_x), const Circle &>);
+
+  return ref_x.computeArea() + cref_x.perimeter();
+}
+
+constexpr auto castPtrTest() {
+  Surface x = Circle(1.0);
+  auto ref_x = erased::any_cast<Circle>(&x);
+  auto cref_x = erased::any_cast<Circle>(&std::as_const(x));
+
+  static_assert(std::is_same_v<decltype(ref_x), Circle *>);
+  static_assert(std::is_same_v<decltype(cref_x), const Circle *>);
+
+  return ref_x->computeArea() + cref_x->perimeter();
+}
+
+constexpr auto castPtrFailTest() {
+  Surface x = Circle(1.0);
+  return any_cast<Rectangle>(&x);
+}
+
 ERASED_MAKE_BEHAVIOR(
     Computer, compute,
     (const &self, int value) requires(self.compute(value))->int);
@@ -121,6 +148,13 @@ TEST(Tests, CompileTimeTestsErased) {
 
   static_assert(compute(Double{}, 10) == 20);
   static_assert(compute(Square{}, 10) == 100);
+
+  static_assert(castRefTest() ==
+                Circle(1.0).computeArea() + Circle(1.0).perimeter());
+  static_assert(castPtrTest() ==
+                Circle(1.0).computeArea() + Circle(1.0).perimeter());
+
+  static_assert(castPtrFailTest() == nullptr);
 }
 
 constexpr auto simpleComputationRefCircle() {
@@ -133,12 +167,46 @@ constexpr auto simpleComputationRefRectangle() {
   return simpleComputationRef(rectangle);
 }
 
+constexpr auto refCastRefTest() {
+  auto x = Circle(1.0);
+  SurfaceRef ref = x;
+  auto &ref_x = erased::any_cast<Circle>(ref);
+  auto &cref_x = erased::any_cast<Circle>(std::as_const(ref));
+
+  static_assert(std::is_same_v<decltype(ref_x), Circle &>);
+  static_assert(std::is_same_v<decltype(cref_x), const Circle &>);
+
+  return &ref_x == &cref_x && &ref_x == &x;
+}
+
+constexpr auto refCastPtrTest() {
+  auto x = Circle(1.0);
+  SurfaceRef ref = x;
+  auto ref_x = erased::any_cast<Circle>(&ref);
+  auto cref_x = erased::any_cast<Circle>(&std::as_const(ref));
+
+  static_assert(std::is_same_v<decltype(ref_x), Circle *>);
+  static_assert(std::is_same_v<decltype(cref_x), const Circle *>);
+
+  return ref_x == cref_x && ref_x == &x;
+}
+
+constexpr auto refCastPtrFailTest() {
+  auto x = Circle(1.0);
+  SurfaceRef ref = x;
+  return any_cast<Rectangle>(&ref);
+}
+
 TEST(Tests, CompileTimeTestsRef) {
   static_assert(simpleComputationRefCircle() ==
                 Circle{1.0}.perimeter() + Circle{1.0}.computeArea());
   static_assert(simpleComputationRefRectangle() ==
                 Rectangle{10.0, 5.0}.perimeter() +
                     Rectangle{10.0, 5.0}.computeArea());
+
+  static_assert(refCastRefTest());
+  static_assert(refCastPtrTest());
+  static_assert(refCastPtrFailTest() == nullptr);
 }
 #endif
 
@@ -160,4 +228,9 @@ TEST(Tests, tests) {
 
   ASSERT_EQ(compute(Double{}, 10), 20);
   ASSERT_EQ(compute(Square{}, 10), 100);
+
+  ASSERT_EQ(castRefTest(), Circle(1.0).computeArea() + Circle(1.0).perimeter());
+  ASSERT_EQ(castPtrTest(), Circle(1.0).computeArea() + Circle(1.0).perimeter());
+
+  ASSERT_EQ(castPtrFailTest(), nullptr);
 }

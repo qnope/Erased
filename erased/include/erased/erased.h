@@ -3,6 +3,7 @@
 #include "utils/utils.h"
 #include <array>
 #include <new>
+#include <typeinfo>
 #include <utility>
 
 #define fwd(x) static_cast<decltype(x) &&>(x)
@@ -90,10 +91,21 @@ template <typename T, typename... List> constexpr bool contains() {
 }
 } // namespace details
 
+template <int Size, typename... Methods> struct basic_erased;
+
+template <typename T> struct is_erased : std::false_type {};
+
+template <int Size, typename... Methods>
+struct is_erased<basic_erased<Size, Methods...>> : std::true_type {};
+
+template <typename T> constexpr bool is_erased_v = is_erased<T>::value;
+
+template <typename T>
+concept erased_concept = is_erased_v<std::decay_t<T>>;
+
 template <int Size, typename... Methods>
 struct alignas(Size) basic_erased : public Methods... {
   using soo = details::soo<Size, Methods...>;
-  soo m_soo;
 
   static constexpr bool copyable = details::contains<Copy, Methods...>();
   static constexpr bool movable = details::contains<Move, Methods...>();
@@ -159,9 +171,43 @@ struct alignas(Size) basic_erased : public Methods... {
   }
 
   constexpr ~basic_erased() { destroy(); }
+
+  template <typename T, int S, typename... M>
+  friend constexpr bool is(const basic_erased<S, M...> &object);
+
+  template <typename T, erased_concept Erased>
+  friend constexpr auto *any_cast(Erased *object);
+
+  template <typename T, erased_concept Erased>
+  friend constexpr auto &&any_cast(Erased &&object);
+
+private:
+  soo m_soo;
 };
 
 template <typename... Methods> using erased = basic_erased<32, Methods...>;
+
+template <typename T, int Size, typename... Methods>
+constexpr bool is(const basic_erased<Size, Methods...> &object) {
+  using soo = typename basic_erased<Size, Methods...>::soo;
+  using vtable = typename soo::vtable;
+
+  return object.m_soo.vtable_ptr == vtable::template construct_for<T>();
+}
+
+template <typename T, erased_concept Erased>
+constexpr auto *any_cast(Erased *object) {
+  if (is<T>(*object))
+    return object->m_soo.template get<T>();
+  return decltype(object->m_soo.template get<T>()){nullptr};
+}
+
+template <typename T, erased_concept Erased>
+constexpr auto &&any_cast(Erased &&object) {
+  if (is<T>(object))
+    return std::forward_like<Erased>(*object.m_soo.template get<T>());
+  throw std::bad_cast();
+}
 } // namespace erased
 
 #undef fwd
