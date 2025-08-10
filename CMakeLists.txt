@@ -4,5 +4,13 @@ include(FetchContent)
 project(erased LANGUAGES CXX)
 
 add_subdirectory(erased)
-add_subdirectory(tests)
-add_subdirectory(benchmarks)
+
+option(ERASED_BUILD_TESTS "Build Erased tests" ON)
+option(ERASED_BUILD_BENCHMARKS "Build Erased benchmarks" ON)
+
+if(ERASED_BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
+if(ERASED_BUILD_BENCHMARKS)
+    add_subdirectory(benchmarks)
+endif()
