@@ -71,7 +71,7 @@ int main() {
 
 ```cpp
 ERASED_MAKE_BEHAVIOR(Draw, draw,
- (const &self, std::ostream &stream) requires(self.draw(), stream)->void);
+ (const &self, std::ostream &stream) requires(self.draw(stream))->void);
 
 using Drawable = erased::erased<Draw>;
 ```
